@@ -2,7 +2,10 @@ pragma circom 2.1.6;
 
 include "es256.circom";
 include "jwt_tx_builder/header-payload-extractor.circom";
+include "jwt_tx_builder/array.circom";
 include "keyless_zk_proofs/arrays.circom";
+include "@zk-email/circuits/lib/sha.circom";
+include "claim_decoder.circom";
 
 template JWT(
     n,
@@ -13,7 +16,9 @@ template JWT(
     maxB64PayloadLength,
 
     maxMatches,
-    maxSubstringLength
+    maxSubstringLength,
+    maxClaims,
+    maxClaimsLength
 ) {
     signal input message[maxMessageLength]; // JWT message (header + payload)
     signal input messageLength; // Length of the message signed in the JWT
@@ -27,6 +32,13 @@ template JWT(
     signal input matchSubstring[maxMatches][maxSubstringLength];
     signal input matchLength[maxMatches];
     signal input matchIndex[maxMatches];
+
+    signal input claims[maxClaims][maxClaimsLength];  
+    signal input claimLengths[maxClaims];      
+
+    component decodedClaims = ClaimDecoder(maxClaims, maxClaimsLength);
+    decodedClaims.claims <== claims;
+    decodedClaims.claimLengths <== claimLengths;
 
     component es256 = ES256(n,k,maxMessageLength);
     es256.message <== message;
