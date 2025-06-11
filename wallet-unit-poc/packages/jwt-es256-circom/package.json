@@ -1,5 +1,12 @@
 {
-  "description": "seediq",
+  "name": "@privacy-scaling-explorations/jwt-es256-circom",
+  "description": "circom circuits for verifying JWTs signed with ES256",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/privacy-scaling-explorations/zkID"
+  },
   "scripts": {
     "start": "npx ts-node ./src/index.ts",
     "test": "NODE_OPTIONS=--max-old-space-size=8192 npx mocha --timeout 900000",
@@ -17,7 +24,7 @@
     "base64-js": "^1.5.1",
     "bs58": "^6.0.0",
     "circom_tester": "^0.0.21",
-    "circomkit": "^0.1.0",
+    "circomkit": "^0.3.3",
     "circomlib": "^2.0.5",
     "did-resolver": "^4.1.0",
     "jose": "^6.0.10",

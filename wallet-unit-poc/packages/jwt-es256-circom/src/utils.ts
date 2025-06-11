@@ -91,3 +91,9 @@ export function encodeClaims(
 
   return { claimArray, claimLengths };
 }
+
+export const base64urlToBase64 = (b64url: string) => {
+  let b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = (4 - (b64.length % 4)) % 4;
+  return b64 + "=".repeat(pad);
+};

@@ -9,6 +9,7 @@ include "claim-decoder.circom";
 include "age-verifier.circom";
 include "utils.circom";
 
+// Prepare Circuit
 template JWT(
     n,
     k,
@@ -38,16 +39,18 @@ template JWT(
 
     signal input claims[maxMatches][maxClaimsLength];
     signal input claimLengths[maxMatches];
-    
-    signal input currentYear;
-    signal input currentMonth;
-    signal input currentDay;
+    signal input decodeFlags[maxMatches];
 
     component claimDecoder = ClaimDecoder(maxMatches, maxClaimsLength);
     claimDecoder.claims <== claims;
     claimDecoder.claimLengths <== claimLengths;
-        
-    ClaimComparator(maxMatches, maxSubstringLength)(claimDecoder.claimHashes ,claimLengths, matchSubstring, matchLength);
+    claimDecoder.decodeFlags <== decodeFlags;
+
+
+    component claimHasher = ClaimHasher(maxMatches, maxClaimsLength);
+    claimHasher.claims <== claims;
+           
+    ClaimComparator(maxMatches, maxSubstringLength)(claimHasher.claimHashes ,claimLengths, matchSubstring, matchLength);
 
     component es256 = ES256(n,k,maxMessageLength);
     es256.message <== message;
@@ -79,5 +82,6 @@ template JWT(
         matcher[i].enabled <== enableMacher[i].out;
     }
 
-    signal output ageAbove18 <== AgeVerifier(decodedLen)(claimDecoder.decodedClaims[1], currentYear, currentMonth, currentDay);
+    signal output jwtClaims[maxMatches][decodedLen];
+    jwtClaims <==  claimDecoder.decodedClaims;
 }

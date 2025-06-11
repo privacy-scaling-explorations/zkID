@@ -6,13 +6,13 @@ This document describes the circuits used for privacy-preserving identity verifi
 
 ### List of Circuits
 
-- `jwt` - JWT signature verification circuit
+- `jwt` - Validates a JWT using ES256 and exposes decoded claims
 
-- `claim-decoder` - Claims decoding circuit
+- `claim-decoder` - Decodes Base64 encoded claims
 
-- `utils` - Selective disclosure claims decoding and birthday extraction circuit
+- `utils` - Helper templates for selective disclosure
 
-- `age_verifier` - Age verification circuit
+- `age-verifier` - Checks if a birth date claim represents a user over 18
 
 - `es256` - ES256 (ECDSA) signature verification circuit
 
@@ -47,9 +47,7 @@ This document describes the circuits used for privacy-preserving identity verifi
 | `matchIndex`     | Starting index of each substring within the payload      |
 | `claims`         | Array of raw Base64-encoded claims                       |
 | `claimLengths`   | Length of each claim                                     |
-| `currentYear`    | Current year for age verification                        |
-| `currentMonth`   | Current month for age verification                       |
-| `currentDay`     | Current day for age verification                         |
+| `decodeFlags`    | Flags indicating which claims should be decoded (0/1)     |
 
 ---
 
@@ -57,7 +55,7 @@ This document describes the circuits used for privacy-preserving identity verifi
 
 | Output       | Description                                                  |
 | ------------ | ------------------------------------------------------------ |
-| `ageAbove18` | Boolean indicating whether age extracted from claims is ≥ 18 |
+| `jwtClaims` | Array of decoded claims returned by `ClaimDecoder` |
 
 ---
 
@@ -71,7 +69,9 @@ This document describes the circuits used for privacy-preserving identity verifi
 
 2.  **ClaimDecoder**
 
-    - Decode JWT claims from Base64 format.
+    - Decode JWT claims from Base64 format only when the corresponding `decodeFlags[i]` is `1`.
+
+    - Claims with `decodeFlags[i]` set to `0` are replaced with a padded Base64 string of `'A'` characters so that decoding always succeeds.
 
     - Hash decoded raw claims using SHA-256.
 
@@ -93,12 +93,6 @@ This document describes the circuits used for privacy-preserving identity verifi
 
     - Verify if hashed claims (`matchSubstring`) match values in `_sd[]` in the decoded JWT payload.
 
-6.  **Age Claim Decoding**
-
-    - Decode the second claim, assumed always to be the age claim, from Base64.
-
-    - Extract the YYMMDD birth date and verify whether the age is above 18.
-
 ---
 
 ## Workflow
@@ -109,4 +103,21 @@ This document describes the circuits used for privacy-preserving identity verifi
 
 3.  **Claims Matching:** Compare decoded and hashed claims against selective disclosure data.
 
-4.  **Age Verification:** Extract and verify user's age from decoded birth date claim.
+## AgeVerifier Circuit
+
+This circuit operates separately from `JWT`. It checks whether a birth date claim corresponds to a user who is 18 years or older.
+
+### Inputs
+
+| Input | Description |
+| --- | --- |
+| `claim` | Decoded claim bytes containing a YYMMDD birth date |
+| `currentYear` | Current year |
+| `currentMonth` | Current month |
+| `currentDay` | Current day |
+
+### Output
+
+| Output | Description |
+| --- | --- |
+| `ageAbove18` | `1` if the extracted age is at least 18, otherwise `0` |
